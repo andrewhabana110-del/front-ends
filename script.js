@@ -266,6 +266,31 @@ function generatePasswordSalt() {
     ).join("");
 }
 
+function initPasswordVisibilityToggles() {
+    document.querySelectorAll('input[type="password"]').forEach(input => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "password-input-wrapper";
+        input.parentNode.insertBefore(wrapper, input);
+        wrapper.appendChild(input);
+
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "password-toggle";
+        toggle.textContent = "Show";
+        toggle.setAttribute("aria-label", "Show password");
+        toggle.setAttribute("aria-controls", input.id);
+        toggle.setAttribute("aria-pressed", "false");
+        toggle.addEventListener("click", () => {
+            const isVisible = input.type === "password";
+            input.type = isVisible ? "text" : "password";
+            toggle.textContent = isVisible ? "Hide" : "Show";
+            toggle.setAttribute("aria-label", `${isVisible ? "Hide" : "Show"} password`);
+            toggle.setAttribute("aria-pressed", String(isVisible));
+        });
+        wrapper.appendChild(toggle);
+    });
+}
+
 function isAdmin(username) {
     if (["admin", "woopiiee"].includes(String(username || "").toLowerCase())) {
         return true;
@@ -5067,6 +5092,7 @@ setInterval(() => {
 }, 4000);
 
 applyTheme(getSavedTheme(), true);
+initPasswordVisibilityToggles();
 initNewFeatureListeners();
 
 if (localStorage.getItem("libraryNotifPref") === "off") {
