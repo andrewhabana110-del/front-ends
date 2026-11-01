@@ -3,6 +3,7 @@ const STORAGE_KEYS = {
     cart: "libraryCart",
     sales: "librarySales",
     borrows: "libraryBorrows",
+    purchases: "libraryPurchases",
     favorites: "libraryFavorites",
     recentlyViewed: "libraryRecent",
     notifications: "libraryNotifications",
@@ -166,6 +167,9 @@ let sales = Object.assign({}, defaultSales, readJSON(STORAGE_KEYS.sales, {}));
 
 let borrows = readJSON(STORAGE_KEYS.borrows, []);
 if (!Array.isArray(borrows)) borrows = [];
+
+let purchases = readJSON(STORAGE_KEYS.purchases, []);
+if (!Array.isArray(purchases)) purchases = [];
 
 let reports = readJSON(STORAGE_KEYS.reports, []);
 if (!Array.isArray(reports)) reports = [];
@@ -564,6 +568,7 @@ function saveLibraryData() {
         [STORAGE_KEYS.cart, cartByUser],
         [STORAGE_KEYS.sales, sales],
         [STORAGE_KEYS.borrows, borrows],
+        [STORAGE_KEYS.purchases, purchases],
         [STORAGE_KEYS.favorites, favoritesByUser],
         [STORAGE_KEYS.recentlyViewed, recentByUser],
         [STORAGE_KEYS.notifications, notifications],
@@ -631,6 +636,16 @@ function sameUser(a, b) {
 function getUserBorrows() {
     return borrows.filter(
         borrow => sameUser(borrow.username, currentUser) && !borrow.returned
+    );
+}
+
+function canRateBook(bookId) {
+    if (!currentUser) return false;
+
+    return borrows.some(
+        borrow => borrow.id === bookId && sameUser(borrow.username, currentUser)
+    ) || purchases.some(
+        purchase => purchase.id === bookId && sameUser(purchase.username, currentUser)
     );
 }
 
@@ -770,7 +785,7 @@ function renderBookCard(book) {
             <div class="actions">
                 <button class="action-btn" onclick="borrowBook('${escapeHTML(book.id)}')">Borrow</button>
                 <button class="action-btn fav" onclick="toggleFavorite('${escapeHTML(book.id)}')">${isFavorite ? "♥" : "♡"}</button>
-                <button class="action-btn rate" onclick="openRateModal('${escapeHTML(book.id)}')">Rate</button>
+                <button class="action-btn rate" onclick="openRateModal('${escapeHTML(book.id)}')" title="${canRateBook(book.id) ? "Rate" : "Borrow or purchase this book to rate"}" ${canRateBook(book.id) ? "" : "disabled"}>Rate</button>
                 <button class="action-btn report" onclick="openReportModal('book', '${escapeHTML(book.id)}')">Report</button>
                 <button class="action-btn" onclick="viewBook('${escapeHTML(book.id)}')">View</button>
             </div>
@@ -955,7 +970,7 @@ function renderBooksPage() {
                         ${primaryBtn}
                         <button class="action-btn" onclick="addToCart('${escapeHTML(book.id)}')" title="${book.isPremium && !isUserPremium(currentUser) ? "Premium members only" : "Buy"}">${book.isPremium && !isUserPremium(currentUser) ? "🔒" : "🛒"}</button>
                         <button class="action-btn fav" onclick="toggleFavorite('${escapeHTML(book.id)}')" title="Favorite">${isFavorite ? "♥" : "♡"}</button>
-                        <button class="action-btn rate" onclick="openRateModal('${escapeHTML(book.id)}')" title="Rate">★</button>
+                        <button class="action-btn rate" onclick="openRateModal('${escapeHTML(book.id)}')" title="${canRateBook(book.id) ? "Rate" : "Borrow or purchase this book to rate"}" ${canRateBook(book.id) ? "" : "disabled"}>★</button>
                         <button class="action-btn report" onclick="openReportModal('book', '${escapeHTML(book.id)}')" title="Report">⚑</button>
                         <button class="action-btn" onclick="viewBook('${escapeHTML(book.id)}')" title="Details">👁</button>
                     </div>
@@ -1342,6 +1357,7 @@ function exportLibraryData() {
         books: books.length,
         cart,
         borrows: borrows.filter(b => sameUser(b.username, currentUser)),
+        purchases: purchases.filter(purchase => sameUser(purchase.username, currentUser)),
         favorites,
         exportedAt: new Date().toISOString()
     };
@@ -1423,6 +1439,7 @@ function removeAccountData(username) {
     });
 
     borrows = borrows.filter(borrow => !sameUser(borrow.username, username));
+    purchases = purchases.filter(purchase => !sameUser(purchase.username, username));
 
     books.forEach(book => {
         if (book.uploadedBy && sameUser(book.uploadedBy, username)) book.uploadedBy = null;
@@ -2044,7 +2061,7 @@ function viewBook(id) {
             ${borrowReturnBtn}
             <button class="secondary-btn" onclick="addToCart('${escapeHTML(book.id)}')">${book.isPremium && !isUserPremium(currentUser) ? "🔒 Premium only" : "Buy"}</button>
             <button class="secondary-btn fav" onclick="toggleFavorite('${escapeHTML(book.id)}')">${isFavorite ? "♥ Favorited" : "♡ Favorite"}</button>
-            <button class="secondary-btn rate" onclick="openRateModal('${escapeHTML(book.id)}')">Rate</button>
+            <button class="secondary-btn rate" onclick="openRateModal('${escapeHTML(book.id)}')" title="${canRateBook(book.id) ? "Rate" : "Borrow or purchase this book to rate"}" ${canRateBook(book.id) ? "" : "disabled"}>Rate</button>
         </div>
     `;
 
@@ -2178,6 +2195,15 @@ function checkoutCart() {
     sales.month += total;
     sales.count += cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
+    cart.forEach(item => {
+        purchases.push({
+            id: item.id,
+            username: currentUser,
+            purchasedOn: today(),
+            quantity: item.quantity || 1
+        });
+    });
+
     cart = [];
 
     addNotification(
@@ -2192,6 +2218,11 @@ function checkoutCart() {
 }
 
 function openRateModal(bookId) {
+    if (!canRateBook(bookId)) {
+        alert("You must borrow or purchase this book before you can rate it.");
+        return;
+    }
+
     const ratingKey = String(currentUser).toLowerCase();
     const userList = [...(userRatings[ratingKey] || []), ...(userRatings[currentUser] || [])];
     if (userList.includes(bookId)) {
@@ -2232,6 +2263,11 @@ function highlightStars(count) {
 
 function submitRating() {
     if (!currentRatingBookId) return;
+    if (!canRateBook(currentRatingBookId)) {
+        closeRateModal();
+        alert("You must borrow or purchase this book before you can rate it.");
+        return;
+    }
 
     const ratingKey = String(currentUser).toLowerCase();
     if (!userRatings[ratingKey]) {
@@ -3574,6 +3610,10 @@ function migrateUsernameData(oldName, newName) {
 
     borrows.forEach(borrow => {
         if (sameUser(borrow.username, oldName)) borrow.username = newName;
+    });
+
+    purchases.forEach(purchase => {
+        if (sameUser(purchase.username, oldName)) purchase.username = newName;
     });
 
     loadChats();
