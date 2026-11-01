@@ -432,6 +432,11 @@ async function handleSignup(event) {
         return;
     }
 
+    if (/\d/.test(username)) {
+        signupError.textContent = "Username cannot contain numbers.";
+        return;
+    }
+
     if (isAuthorApplication) {
         const penProblem = validatePenName(penName);
         if (penProblem) {
@@ -442,6 +447,11 @@ async function handleSignup(event) {
 
     if (password.length < 8) {
         signupError.textContent = "Password must be at least 8 characters.";
+        return;
+    }
+
+    if (/\s/.test(password)) {
+        signupError.textContent = "Password cannot contain spaces.";
         return;
     }
 

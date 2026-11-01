@@ -79,7 +79,7 @@
                 </div>
 
                 <label for="signupUsername">Username</label>
-                <input type="text" id="signupUsername" placeholder="Choose username" required>
+                <input type="text" id="signupUsername" placeholder="Choose username" pattern="[^0-9]+" title="Username cannot contain numbers." required>
 
                 <div id="authorSignupFields" class="hidden">
                     <label for="signupPenName">Pen Name (shown on your books)</label>
@@ -92,10 +92,10 @@
                 </div>
 
                 <label for="signupPassword">Password (min 8 characters)</label>
-                <input type="password" id="signupPassword" placeholder="Minimum 8 characters" minlength="8" required>
+                <input type="password" id="signupPassword" placeholder="Minimum 8 characters" minlength="8" pattern="\S+" title="Password cannot contain spaces." required>
 
                 <label for="signupPasswordConfirm">Confirm Password</label>
-                <input type="password" id="signupPasswordConfirm" placeholder="Re-enter password" minlength="8" required>
+                <input type="password" id="signupPasswordConfirm" placeholder="Re-enter password" minlength="8" pattern="\S+" title="Password cannot contain spaces." required>
 
                 <label for="signupRecoveryQuestion">Recovery question (to reset your password later)</label>
                 <select id="signupRecoveryQuestion" required><option value="">Choose a question...</option><option value="What was the name of your first pet?">What was the name of your first pet?</option><option value="In what city were you born?">In what city were you born?</option><option value="What is your favorite book?">What is your favorite book?</option><option value="What was your childhood nickname?">What was your childhood nickname?</option><option value="What was the name of your first school?">What was the name of your first school?</option></select>
