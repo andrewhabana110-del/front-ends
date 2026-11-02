@@ -551,6 +551,19 @@ async function handleSignup(event) {
 }
 
 function handleLogout() {
+    const modal = document.getElementById("logoutModal");
+    modal?.classList.remove("hidden");
+    requestAnimationFrame(() => modal?.classList.add("show"));
+}
+
+function closeLogoutModal() {
+    const modal = document.getElementById("logoutModal");
+    modal?.classList.remove("show");
+    setTimeout(() => modal?.classList.add("hidden"), 350);
+}
+
+function confirmLogout() {
+    closeLogoutModal();
     setAuthenticated(false);
     loginForm?.reset();
     signupForm?.reset();
@@ -5066,6 +5079,7 @@ document.getElementById("helpOverlay")?.addEventListener("click", closeHelpModal
 document.addEventListener("keydown", event => {
     if (event.key === "Escape") {
         closeHelpModal();
+        closeLogoutModal();
         closeSidePanel();
         closeRateModal();
         closeReportModal();

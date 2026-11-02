@@ -930,6 +930,19 @@
         </div>
     </div>
 
+    <div id="logoutModal" class="help-modal hidden">
+        <div class="help-modal-overlay" onclick="closeLogoutModal()"></div>
+        <div class="help-modal-content" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle" style="text-align: center;">
+            <button class="help-close" onclick="closeLogoutModal()" aria-label="Close">×</button>
+            <h2 id="logoutModalTitle">Log Out?</h2>
+            <p style="margin-bottom: 20px;">Are you sure you want to log out?</p>
+            <div style="display: flex; gap: 12px;">
+                <button class="secondary-btn" onclick="closeLogoutModal()" style="flex: 1; padding: 12px;">Cancel</button>
+                <button class="danger-btn" onclick="confirmLogout()" style="flex: 1; padding: 12px;">Log Out</button>
+            </div>
+        </div>
+    </div>
+
     <div id="premiumModal" class="help-modal hidden">
         <div class="help-modal-overlay" id="premiumOverlay" onclick="closePremiumModal()"></div>
         <div class="help-modal-content" style="text-align: center;">
